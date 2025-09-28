@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "841510908733",
+    "project_id": "nabhaapp",
+    "storage_bucket": "nabhaapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:841510908733:android:e0b9090586c498a51f4b54",
+        "android_client_info": {
+          "package_name": "com.navaap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAooQPXvnOSsT6yQaqJHPW_bZO4AFRMQ_I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
