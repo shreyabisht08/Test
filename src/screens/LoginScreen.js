@@ -1,48 +1,63 @@
 // src/screens/LoginScreen.js
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import auth from '@react-native-firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 🔴 IMPORTANT: Change this IP if you are testing on a REAL PHONE
-const API_BASE_URL = "http://192.168.1.9"; 
-
-const LoginScreen = ({ onLogin }) => {
-  const [role, setRole] = useState(null);
+const LoginScreen = ({ onLogin, onNavigateBack }) => {
+  const [role, setRole] = useState('patient'); // Default to patient
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!role) {
-      Alert.alert("Select Role", "Please choose Patient, Doctor or Pharmacist");
+      Alert.alert("Select Role", "Please choose a role to log in.");
       return;
     }
-
     if (!email || !password) {
-      Alert.alert("Error", "Enter email and password");
+      Alert.alert("Error", "Please enter both your email and password.");
       return;
     }
 
-    const loginUrl = `${API_BASE_URL}/api/${role}s/login`;
-
+    setLoading(true);
     try {
-      const res = await fetch(loginUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      // Step 1: Sign in with Firebase
+      const userCredential = await auth().signInWithEmailAndPassword(email, password);
+      const user = userCredential.user;
 
-      const data = await res.json();
+      // Step 2: Check if the user has verified their email
+      if (!user.emailVerified) {
+        Alert.alert(
+          "Email Not Verified",
+          "Please check your inbox and click the verification link before logging in."
+        );
+        setLoading(false);
+        return;
+      }
 
-      if (res.ok) {
-        const token = data.token;
-        Alert.alert("Success", `${role} logged in!`);
-        onLogin(token, role);
-      } else {
-        Alert.alert("Login Error", data.message || "Login failed");
-      }
-    } catch (err) {
-      console.error("Network request failed:", err);
-      Alert.alert("Connection Error", "Server not reachable. Please check your network and IP address settings.");
-    }
+      // Step 3: Get the Firebase ID Token
+      const idToken = await user.getIdToken();
+
+      // Store the email for the PatientFormScreen to use
+      await AsyncStorage.setItem("userEmail", user.email);
+      
+      Alert.alert("Success", `${role} logged in!`);
+
+      // Step 4: Call the onLogin function in App.js to start the session
+      onLogin(idToken, role);
+
+    } catch (error) {
+      let errorMessage = "An unknown error occurred.";
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = "Invalid email or password. Please try again.";
+      } else {
+        errorMessage = error.message;
+      }
+      Alert.alert("Login Error", errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -89,8 +104,8 @@ const LoginScreen = ({ onLogin }) => {
       />
 
       {/* Login Button */}
-      <TouchableOpacity onPress={handleLogin} style={styles.button}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={loading}>
+        <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Login'}</Text>
       </TouchableOpacity>
     </View>
   );
