@@ -73,3 +73,11 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Build
+android/app/build/
+ios/Pods/
+
+# Secrets
+backend/firebase-config.json
+android/app/google-services.json
